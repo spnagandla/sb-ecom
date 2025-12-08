@@ -21,7 +21,7 @@ public class Category {
     private Long categoryId;
 
     @NotBlank(message =" Category name can't be null")
-    @Size(min = 5,message = "Category must contain at least 5 characters")
+    @Size(min = 3,message = "Category must contain at least 3 characters")
     private String categoryName;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
