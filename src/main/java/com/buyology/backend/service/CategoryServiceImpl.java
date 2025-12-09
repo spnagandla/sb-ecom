@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,10 +32,15 @@ public class CategoryServiceImpl implements CategoryService {
     private static final Logger log = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
     @Override
-    public CategoryResponseDTO getAllCategories(Integer pageNumber, Integer pageSize) {
+    public CategoryResponseDTO getAllCategories(Integer pageNumber, Integer pageSize, String sortBy, String orderBy) {
         log.info("Fetching all categories");
 
-        Pageable pageRequired = PageRequest.of(pageNumber,pageSize);
+        Sort sortByAndOrder  = orderBy!= null && orderBy.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        //pagination
+        Pageable pageRequired = PageRequest.of(pageNumber,pageSize, sortByAndOrder);
         Page<Category> categoryPage = categoryRepository.findAll(pageRequired);
 
         List<Category> categories = categoryPage.getContent();
@@ -42,8 +48,15 @@ public class CategoryServiceImpl implements CategoryService {
         List<CategoryDTO> categoryDTOS = categories.stream()
                 .map(category -> modelMapper.map(category,CategoryDTO.class))
                 .toList();
-        log.info("Converted categorys to categoryDTO's");
-        return new CategoryResponseDTO(categoryDTOS);
+
+        CategoryResponseDTO categoryResponseDTO =new CategoryResponseDTO();
+        categoryResponseDTO.setContent(categoryDTOS);
+        categoryResponseDTO.setPageNumber(categoryPage.getNumber());
+        categoryResponseDTO.setPageSize(categoryPage.getSize());
+        categoryResponseDTO.setTotalElements(categoryPage.getTotalElements());
+        categoryResponseDTO.setTotalPages(categoryPage.getTotalPages());
+        categoryResponseDTO.setLastPage(categoryPage.isLast());
+        return categoryResponseDTO;
     }
 
     @Override

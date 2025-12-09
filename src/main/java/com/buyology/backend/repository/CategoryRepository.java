@@ -10,7 +10,7 @@ import java.util.List;
 public interface CategoryRepository extends JpaRepository<Category,Long> {
     Category findByCategoryName(
             @NotBlank(message =" Category name can't be null")
-            @Size(min = 5,message = "Category must contain at least 5 characters")
+            @Size(min = 3,message = "Category must contain at least 3 characters")
             String categoryName);
 
     List<Category> findByCategoryNameIn(List<String> categoryNames);

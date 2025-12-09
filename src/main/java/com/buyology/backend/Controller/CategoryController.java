@@ -1,5 +1,6 @@
 package com.buyology.backend.Controller;
 
+import com.buyology.backend.config.AppConstants;
 import com.buyology.backend.dto.CategoryDTO;
 import com.buyology.backend.dto.response.CategoryResponseDTO;
 import com.buyology.backend.service.CategoryService;
@@ -27,11 +28,13 @@ public class CategoryController {
     @GetMapping("/public/categories")
     // Or @RequestMapping( value ="/public/categories", method = RequestMethod.GET)
     public ResponseEntity<CategoryResponseDTO> getAllCategories(
-            @RequestParam(name = "page") Integer pageNumber,
-            @RequestParam(name = "size") Integer pageSize){
+            @RequestParam(name = "page", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "size", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_CATEGORIES_BY, required = false)String sortBy,
+            @RequestParam(name = "orderBy",defaultValue = AppConstants.SORT_DIRECTION, required = false)String orderBy){
 
         log.info("Requesting for all the categories");
-        com.buyology.backend.dto.response.CategoryResponseDTO categoryResponse = categoryService.getAllCategories(pageNumber,pageSize);
+        com.buyology.backend.dto.response.CategoryResponseDTO categoryResponse = categoryService.getAllCategories(pageNumber,pageSize, sortBy,orderBy);
         return ResponseEntity.ok(categoryResponse);
     }
 
