@@ -1,6 +1,8 @@
 package com.buyology.backend.exception;
 
 import com.buyology.backend.Controller.CategoryController;
+import com.buyology.backend.dto.response.APIResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,15 +31,27 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<String> resourceNotFoundException(ResourceNotFoundException ex) {
+    public ResponseEntity<APIResponse> resourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
+        APIResponse apiResponse = new APIResponse(ex.getMessage(),
+                false,
+                HttpStatus.NOT_FOUND.value(),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+                .body(apiResponse);
     }
 
     @ExceptionHandler(APIException.class)
-    public ResponseEntity<String> apiException(APIException ex) {
+    public ResponseEntity<APIResponse> apiException(APIException ex, HttpServletRequest request) {
+        APIResponse apiResponse = new APIResponse(ex.getMessage(),
+                false,
+                HttpStatus.BAD_REQUEST.value(),
+                LocalDateTime.now(),
+                request.getRequestURI()
+        );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ex.getMessage());
+                .body(apiResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
