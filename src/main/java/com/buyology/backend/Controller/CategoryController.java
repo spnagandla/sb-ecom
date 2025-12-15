@@ -39,7 +39,7 @@ public class CategoryController {
     }
 
     @PostMapping("/public/categories")
-    public ResponseEntity<?> createCategory(@Valid @RequestBody CategoryDTO categoryDTO){
+    public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody CategoryDTO categoryDTO){
         log.info("Requested to add a new Category");
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createCategory(categoryDTO));
     }
@@ -51,7 +51,7 @@ public class CategoryController {
     }
 
     @PutMapping("/public/categories/{categoryId}")
-    public ResponseEntity<?> updateCategory(@PathVariable Long categoryId,
+    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long categoryId,
                                             @Valid @RequestBody CategoryDTO categoryRequest) {
         log.info("Requested to update category with id {}", categoryId);
         return ResponseEntity.status(HttpStatus.OK).body(categoryService.updateCategory(categoryId, categoryRequest));
@@ -59,14 +59,15 @@ public class CategoryController {
 
     //Don't use this unless if there is a strong reason
     @DeleteMapping("/admin/categories")
-    public ResponseEntity<Void> deleteCategory(){
+    public ResponseEntity<Void> deleteBulkCategory(){
         log.info("Requested to empty database");
         categoryService.deleteAllCategory();
         return ResponseEntity.ok().build();
     }
 
+    //Add list of Category at once
     @PostMapping("/admin/categories/bulk")
-    public ResponseEntity<List<CategoryDTO>> createCategories(@Valid @RequestBody List<CategoryDTO> categoryDTO){
+    public ResponseEntity<List<CategoryDTO>> createBulkCategories(@Valid @RequestBody List<CategoryDTO> categoryDTO){
         log.info("Requested to add a bunch of categories");
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryService.createBulkCategories(categoryDTO));
     }
