@@ -2,6 +2,8 @@ package com.buyology.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,10 +25,15 @@ public class Product {
             allocationSize = 50
     )
     private Long productId;
+
+    @NotBlank(message = "Product name cant be null")
+    @Size(message = "Product name must contain at least 3 characters")
     private String productName;
+    private String image;
     private String description;
     private Integer quantity;
     private BigDecimal price;
+    private BigDecimal discount;
     private BigDecimal specialPrice;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
