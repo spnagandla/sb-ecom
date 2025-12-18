@@ -1,6 +1,5 @@
 package com.buyology.backend.exception;
 
-import com.buyology.backend.Controller.CategoryController;
 import com.buyology.backend.dto.response.APIResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;

@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.buyology.backend.utils.CommonMethods.sortByAndOrderBy;
+
 @Service
 public class CategoryServiceImpl implements CategoryService {
 
@@ -34,9 +36,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponseDTO getAllCategories(Integer pageNumber, Integer pageSize, String sortBy, String orderBy) {
         log.info("Fetching all categories");
 
-        Sort sortByAndOrder  = orderBy!= null && orderBy.equalsIgnoreCase("asc")
-                ? Sort.by(sortBy).ascending()
-                : Sort.by(sortBy).descending();
+        Sort sortByAndOrder  = sortByAndOrderBy(sortBy,orderBy);
 
         //pagination
         Pageable pageRequired = PageRequest.of(pageNumber,pageSize, sortByAndOrder);
