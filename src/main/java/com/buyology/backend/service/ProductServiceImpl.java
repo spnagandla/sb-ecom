@@ -2,13 +2,14 @@ package com.buyology.backend.service;
 
 import com.buyology.backend.dto.ProductDTO;
 import com.buyology.backend.dto.response.ProductResponseDTO;
-import com.buyology.backend.exception.APIException;
 import com.buyology.backend.exception.ResourceNotFoundException;
 import com.buyology.backend.model.Category;
 import com.buyology.backend.model.Product;
+import com.buyology.backend.pagination.PaginationUtil;
 import com.buyology.backend.repository.CategoryRepository;
 import com.buyology.backend.repository.ProductRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,8 +43,9 @@ public class ProductServiceImpl implements ProductService{
 
     @Override
     @Transactional
-    public ProductDTO createProduct(Long categoryId, Product product) {
+    public ProductDTO createProduct(Long categoryId, ProductDTO productDTO) {
         log.info("Request to save the product @SERVICE");
+        Product product = modelMapper.map(productDTO,Product.class);
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("category", "categoryId", categoryId));
 
@@ -61,11 +63,7 @@ public class ProductServiceImpl implements ProductService{
             throw new IllegalArgumentException("Discount must be between 0 and 100");
         }
 
-        BigDecimal specialPrice = price.subtract(
-                        price.multiply(discount)
-                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
-                ).max(BigDecimal.ZERO)
-                .setScale(2, RoundingMode.HALF_UP);
+        BigDecimal specialPrice = getSpecialPrice(price,discount);
 
         product.setSpecialPrice(specialPrice);
 
@@ -84,19 +82,66 @@ public class ProductServiceImpl implements ProductService{
         Page<Product> productPage = productRepository.findAll(pageRequired);
 
         List<Product> products = productPage.getContent();
-        if(products.isEmpty()) throw new APIException("No Products Found");
-
-        List<ProductDTO> ProductDto = products.stream()
+        List<ProductDTO> productDto = products.stream()
                 .map(product -> modelMapper.map(product,ProductDTO.class))
                 .toList();
 
-        ProductResponseDTO productResponseDTO = new ProductResponseDTO();
-        productResponseDTO.setContent(ProductDto);
-        productResponseDTO.setPageNumber(productPage.getNumber());
-        productResponseDTO.setPageSize(productPage.getSize());
-        productResponseDTO.setTotalElements(productPage.getTotalElements());
-        productResponseDTO.setTotalPages(productPage.getTotalPages());
-        productResponseDTO.setLastPage(productPage.isLast());
-        return productResponseDTO;
+        return PaginationUtil.build(productPage,productDto,new ProductResponseDTO());
+    }
+
+    @Override
+    public ProductResponseDTO searchByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortBy, String orderBy) {
+        log.info("Request for List of products related to a category @SERVICE");
+
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("category", "categoryId", categoryId));
+
+        Sort sortByAndOrder =sortByAndOrderBy(sortBy,orderBy);
+        Pageable pageRequired = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
+        Page<Product> productPage = productRepository.findByCategory(category, pageRequired);
+        List<Product> products = productPage.getContent();
+
+        List<ProductDTO> productDTO = products.stream()
+                .map(product -> modelMapper.map(product,ProductDTO.class))
+                .toList();
+
+        return PaginationUtil.build(productPage,productDTO,new ProductResponseDTO());
+    }
+
+    @Override
+    public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
+        Product product = modelMapper.map(productDTO,Product.class);
+
+        log.info("Request To update the product @SERVICE");
+        Product exsistingProduct = productRepository.findById(productId)
+                .orElseThrow(()-> new ResourceNotFoundException("product","productId",productId));
+
+        exsistingProduct.setProductName(product.getProductName());
+        exsistingProduct.setDescription(product.getDescription());
+        exsistingProduct.setQuantity(product.getQuantity());
+        exsistingProduct.setPrice(product.getPrice());
+        exsistingProduct.setDiscount(product.getDiscount());
+        exsistingProduct.setSpecialPrice(getSpecialPrice(product.getPrice(),product.getDiscount()));
+
+        Product savedProduct = productRepository.save(exsistingProduct);
+        log.info("Saved the Updated Product To DB @SERVICE");
+        return modelMapper.map(savedProduct,ProductDTO.class);
+    }
+
+    @Override
+    public ProductDTO deleteProduct(Long productId) {
+        Product existingProduct = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product","productId",productId));
+        productRepository.deleteById(productId);
+        log.info("Product With ID:{} Deleted Successfully @SERVICE", productId);
+        return modelMapper.map(existingProduct,ProductDTO.class);
+    }
+
+    private static BigDecimal getSpecialPrice(BigDecimal price, BigDecimal discount) {
+        return price.subtract(
+                        price.multiply(discount)
+                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
+                ).max(BigDecimal.ZERO)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 }

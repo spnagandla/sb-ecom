@@ -5,11 +5,13 @@ import com.buyology.backend.dto.response.CategoryResponseDTO;
 import com.buyology.backend.exception.APIException;
 import com.buyology.backend.exception.ResourceNotFoundException;
 import com.buyology.backend.model.Category;
+import com.buyology.backend.pagination.PaginationUtil;
 import com.buyology.backend.repository.CategoryRepository;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import static com.buyology.backend.utils.CommonMethods.sortByAndOrderBy;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -17,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.buyology.backend.utils.CommonMethods.sortByAndOrderBy;
 
 @Service
 public class CategoryServiceImpl implements CategoryService {
@@ -41,21 +42,24 @@ public class CategoryServiceImpl implements CategoryService {
         //pagination
         Pageable pageRequired = PageRequest.of(pageNumber,pageSize, sortByAndOrder);
         Page<Category> categoryPage = categoryRepository.findAll(pageRequired);
-
         List<Category> categories = categoryPage.getContent();
         if(categories.isEmpty()) throw new APIException("No categories Found");
         List<CategoryDTO> categoryDTOS = categories.stream()
                 .map(category -> modelMapper.map(category,CategoryDTO.class))
                 .toList();
 
-        CategoryResponseDTO categoryResponseDTO =new CategoryResponseDTO();
-        categoryResponseDTO.setContent(categoryDTOS);
-        categoryResponseDTO.setPageNumber(categoryPage.getNumber());
-        categoryResponseDTO.setPageSize(categoryPage.getSize());
-        categoryResponseDTO.setTotalElements(categoryPage.getTotalElements());
-        categoryResponseDTO.setTotalPages(categoryPage.getTotalPages());
-        categoryResponseDTO.setLastPage(categoryPage.isLast());
-        return categoryResponseDTO;
+        return PaginationUtil.build(categoryPage,categoryDTOS,new CategoryResponseDTO());
+
+ //This becomes repeated code so converted this to a common class works with any type.
+//        CategoryResponseDTO categoryResponseDTO =new CategoryResponseDTO();
+//        categoryResponseDTO.setContent(categoryDTOS);
+//        categoryResponseDTO.setPageNumber(categoryPage.getNumber());
+//        categoryResponseDTO.setPageSize(categoryPage.getSize());
+//        categoryResponseDTO.setTotalElements(categoryPage.getTotalElements());
+//        categoryResponseDTO.setTotalPages(categoryPage.getTotalPages());
+//        categoryResponseDTO.setLastPage(categoryPage.isLast());
+//        return categoryResponseDTO;
+
     }
 
     @Override
