@@ -1,4 +1,4 @@
-name: Merge pipeline
+name: Merge Pipeline
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: read
+  packages: write
+
 
 jobs:
   verify_build_push:
