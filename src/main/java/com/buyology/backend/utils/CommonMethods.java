@@ -1,7 +1,9 @@
 package com.buyology.backend.utils;
 
+import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.multipart.MultipartFile;
 
 public class CommonMethods {
 
@@ -13,5 +15,23 @@ public class CommonMethods {
     }
     public static PageRequest getPageRequired (Integer pageNumber, Integer pageSize, Sort sortByAndOrder) {
         return PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+    }
+
+    public static void validateImage(MultipartFile image){
+
+        if(image == null || image.isEmpty()){
+            throw new BadRequestException("Image File is Required");
+        }
+
+        String contentType = image.getContentType();
+        if(contentType == null){
+            throw new BadRequestException("Invalid image content type");
+        }
+
+        if (!contentType.equals("image/jpeg")
+                && !contentType.equals("image/png")
+                && !contentType.equals("image/webp")) {
+            throw new BadRequestException("Only JPG, PNG, and WEBP images are allowed");
+        }
     }
 }

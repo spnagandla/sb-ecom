@@ -29,7 +29,7 @@ public class Product {
     @NotBlank(message = "Product name cant be null")
     @Size(message = "Product name must contain at least 3 characters")
     private String productName;
-    private String image;
+    private String imagePath;
     private String description;
     private Integer quantity;
     private BigDecimal price;

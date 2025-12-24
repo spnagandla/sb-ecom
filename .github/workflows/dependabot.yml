@@ -1,11 +1,20 @@
 version: 2
 updates:
+
+  # 1) Maven dependency updates
   - package-ecosystem: "maven"
+    # Look for pom.xml in the root of the repository
     directory: "/"
     schedule:
       interval: "weekly"
 
+  # 2) GitHub Actions workflow updates
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+
+
+# Dependabot will open pull requests when:
+# - a dependency has a security vulnerability
+# - a newer compatible version is available

@@ -13,7 +13,7 @@ public class ProductDTO {
 
     private Long productId;
     private String productName;
-    private String image;
+    private String imagePath;
     private String description;
     private Integer quantity;
     private BigDecimal price;

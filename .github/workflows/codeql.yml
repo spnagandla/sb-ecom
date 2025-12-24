@@ -14,14 +14,20 @@ jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Clone the repository into the runner machine
+      # Without this, there is no code to scan
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Step 2: Initialize CodeQL for Java
+      # This sets up the CodeQL engine and loads Java security rules
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: java
 
+      # Step 3: Install Java on the runner
+      # Required so Maven can compile the project
       - name: Setup JAVA
         uses: actions/setup-java@v4
         with:
@@ -29,8 +35,13 @@ jobs:
           java-version: "17"
           cache: maven
 
+      # Step 4: Build the project (without running tests)
+      # CodeQL needs the compiled code and dependency graph for accurate analysis
       - name: Build Project
         run: mvn -B -DskipTests package
 
+      # Step 5: Run the CodeQL analysis
+      # This scans the code and uploads results to:
+      # GitHub → Security → Code scanning alerts
       - name: Analyze
         uses: github/codeql-action/analyze@v3

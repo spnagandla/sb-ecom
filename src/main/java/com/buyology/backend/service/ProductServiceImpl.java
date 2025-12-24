@@ -17,6 +17,7 @@ import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -135,6 +136,13 @@ public class ProductServiceImpl implements ProductService{
         productRepository.deleteById(productId);
         log.info("Product With ID:{} Deleted Successfully @SERVICE", productId);
         return modelMapper.map(existingProduct,ProductDTO.class);
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO updateProductImage(Long productId, MultipartFile image) {
+
+        return null;
     }
 
     private static BigDecimal getSpecialPrice(BigDecimal price, BigDecimal discount) {

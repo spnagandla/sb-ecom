@@ -10,8 +10,10 @@ import jakarta.validation.Valid;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api")
@@ -67,4 +69,17 @@ public class ProductController {
         log.info("Requested to Delete Product with id:{}", productId);
         return ResponseEntity.ok(productService.deleteProduct(productId));
     }
+
+    @PatchMapping(
+            value = "/products/{productId}/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+
+    public ResponseEntity<ProductDTO> updateProductImage(
+            @PathVariable Long productId,
+            @RequestParam(name ="image")MultipartFile image
+            ){
+        return ResponseEntity.ok(productService.updateProductImage(productId,image));
+    }
+
 }
