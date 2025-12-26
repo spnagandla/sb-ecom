@@ -79,6 +79,7 @@ public class ProductController {
             @PathVariable Long productId,
             @RequestParam(name ="image")MultipartFile image
             ){
+        log.info("Requested to update Product image with id:{}", productId);
         return ResponseEntity.ok(productService.updateProductImage(productId,image));
     }
 
