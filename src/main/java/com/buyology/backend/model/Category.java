@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity(name ="categories")
 @Data
@@ -27,6 +28,9 @@ public class Category {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "category",cascade = CascadeType.ALL)
+    List<Product> products;
 
     // Adding this annotation will tell hibernate to run this method before saving the record so we will get the createdAt assigned with a value
     @PrePersist
