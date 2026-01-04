@@ -1,10 +1,10 @@
  There is a doc folder where you can find all the docs.
 
-[Docker](docs/docker-basics.md)
+[Docker](src/main/java/com/buyology/backend/docs/docker-basics.md)
 
-[Spring-Security(JWT)](docs/JWT_Spring_Security.md)
+[Spring-Security(JWT)](src/main/java/com/buyology/backend/docs/JWT_Spring_Security.md)
 
-[OIDC](docs/OIDC.MD)
+[OIDC](src/main/java/com/buyology/backend/docs/OIDC.MD)
 
-[Supabase](docs/Supabase.md)
+[Supabase](src/main/java/com/buyology/backend/docs/Supabase.md)
  
