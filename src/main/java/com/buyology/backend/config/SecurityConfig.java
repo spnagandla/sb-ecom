@@ -30,3 +30,6 @@ public class SecurityConfig {
                 .build();
     }
 }
+
+//HttpSecurity is automatically created at the startup of the app (i.e i mean when the spring is started and application is runned)
+//More Documentation is there in the docs under the name called Seurity_filter_chain.md file
