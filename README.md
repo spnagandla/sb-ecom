@@ -10,4 +10,8 @@
 
 
 
+This 👇 (Supabase path) is Implemented to test the endpoints for backend only when going forward with the UI, I am using the different approach.
+
+1. [ ] If you want to test just the endpoint from Backend Then n-comment the code from the SecurityConfig.java in config.`
+
 ![Security](src/main/java/com/buyology/backend/docs/Our_security.png)
