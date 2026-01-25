@@ -59,10 +59,10 @@ public class WebSecurityConfig {
         return web -> web.ignoring()
                 .requestMatchers(
                         "/v2/api-docs",
-                        "configuration/ui",
+                        "/configuration/ui",
                         "/swagger-resources/**",
                         "/configuration/security",
-                        "swagger-ui.html",
+                        "/swagger-ui.html",
                         "/webjars/**"
                 );
     }

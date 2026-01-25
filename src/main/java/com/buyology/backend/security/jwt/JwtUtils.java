@@ -25,7 +25,7 @@ public class JwtUtils {
     private final int jwtExpirationMs;
     private final String jwtSecretKey;
 
-    public JwtUtils(@Value("${spring.app.jwtSecret}") int jwtExpirationMs, @Value("${spring.app.jwtExpirationMs}") String jwtSecretKey) {
+    public JwtUtils(@Value("${spring.app.jwtExpirationMs}") int jwtExpirationMs, @Value("${spring.app.jwtSecret}") String jwtSecretKey) {
         this.jwtExpirationMs = jwtExpirationMs;
         this.jwtSecretKey = jwtSecretKey;
     }
