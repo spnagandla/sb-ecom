@@ -33,10 +33,10 @@ public class SecurityService {
 
     public void register(SignupRequest request) {
 
+        log.info("Signup attempt username='{}', email='{}'", request.getUserName(), request.getEmail());
         if (userRepository.existsByUserName(request.getUserName())) {
             throw new APIException("UserName Already Taken!");
         }
-
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new APIException("Email is already in use!");
         }
@@ -49,21 +49,18 @@ public class SecurityService {
 
         user.setRoles(resolveRoles(request.getRole()));
         userRepository.save(user);
-
+        log.info("Signup success for username'{}'", user.getUserName());
     }
-
 
     private Set<Role> resolveRoles(Set<String> requestRoles) {
         if (requestRoles == null || requestRoles.isEmpty()) {
             return Set.of(getRole(UserRoles.ROLE_USER));
         }
-
         Set<Role> roles = new HashSet<>();
         for (String role : requestRoles) {
             roles.add(mapRole(role)); // user sends the admin, seller and we map that to the ROLE_ADMIN..  before storing to Db
         }
         return roles;
-
     }
 
     private Role mapRole(String role) {
@@ -78,8 +75,6 @@ public class SecurityService {
     public Role getRole(UserRoles role) {
         return roleRepository.findByRoleName(role)
                 .orElseThrow(() -> new APIException("Role not found:   Will assign the default role" + role));
-
     }
-
 
 }
