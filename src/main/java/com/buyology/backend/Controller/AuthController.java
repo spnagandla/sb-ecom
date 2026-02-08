@@ -11,6 +11,8 @@ import com.buyology.backend.security.services.UserDetailsImpl;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -87,7 +89,7 @@ public class AuthController {
          * - Adds claims like username / roles (depending on your JwtUtils)
          * - This token will be sent by the client on every future request
          */
-        String jwtToken = jwtUtils.generateTokenNameFromUserName(userDetails);
+        ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(userDetails);
 
         /*
          * STEP 4: Extract roles from UserDetails
@@ -110,13 +112,15 @@ public class AuthController {
         UserInfoResponse response = new UserInfoResponse(
                 userDetails.getId(),
                 userDetails.getUsername(),
-                roles,
-                jwtToken
+                roles
         );
 
         log.info("Login response successfully created for username: {}",
                 userDetails.getUsername());
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(response);
+
     }
 
 

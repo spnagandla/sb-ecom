@@ -43,7 +43,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         log.info("JwtAuthFilter is called for this URI: {}",request.getRequestURI());
 
         try{
-            String jwtToken = jwtUtils.getJwtTokenFromHeader(request);
+            String jwtToken = jwtUtils.getJwtFromCookie(request);
             if(jwtToken != null && jwtUtils.validateJwtToken(jwtToken)){
                 String userName = jwtUtils.getUserNameFromJwt(jwtToken);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userName);

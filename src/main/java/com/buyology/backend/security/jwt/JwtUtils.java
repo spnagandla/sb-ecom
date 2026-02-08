@@ -6,12 +6,15 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.WebUtils;
 
 import javax.crypto.SecretKey;
 import java.security.Key;
@@ -24,13 +27,16 @@ public class JwtUtils {
 
     private final int jwtExpirationMs;
     private final String jwtSecretKey;
+    private final String cookieName;
 
-    public JwtUtils(@Value("${spring.app.jwtExpirationMs}") int jwtExpirationMs, @Value("${spring.app.jwtSecret}") String jwtSecretKey) {
+    public JwtUtils(@Value("${spring.app.jwtExpirationMs}") int jwtExpirationMs, @Value("${spring.app.jwtSecret}") String jwtSecretKey, @Value("${spring.app.cookieName}") String cookieName) {
         this.jwtExpirationMs = jwtExpirationMs;
         this.jwtSecretKey = jwtSecretKey;
+        this.cookieName = cookieName;
     }
 
     //Getting JWT manually
+    @Deprecated
     public String getJwtTokenFromHeader(HttpServletRequest httpServletRequest) {
         String authHeader = httpServletRequest.getHeader("Authorization");
 
@@ -41,11 +47,29 @@ public class JwtUtils {
         return null;
     }
 
+    //Getting jwt from cookie, as we are implementing the cookie based
+    public String getJwtFromCookie(HttpServletRequest httpServletRequest){
+        log.info("Extracting the cookie at this point");
+        Cookie cookie = WebUtils.getCookie(httpServletRequest,cookieName);
+        return cookie != null ? cookie.getValue() : null;
+    }
+
+    //Generate the cookie(which contains the jwt) to send to client.
+    //ResponseCookie is Spring’s representation of an HTTP cookie that the SERVER sends to the CLIENT.
+    public ResponseCookie generateJwtCookie(UserDetails userDetails) {
+        String jwt = generateTokenNameFromUserName(userDetails.getUsername());
+        log.info("Generating the Cookie");
+        return ResponseCookie.from(cookieName,jwt)
+                .path("/api") //“Only send this cookie for URLs starting with /api”
+                .maxAge(24 * 60 * 60)
+                .httpOnly(false) //true → JS cannot steal JWT (protects against XSS) false → JS can read JWT (dangerous)
+                .build();
+    }
+
     //Generating token from username
-    public String generateTokenNameFromUserName(UserDetails userDetails){
-        String username = userDetails.getUsername();
+    public String generateTokenNameFromUserName(String userName){
         return Jwts.builder()
-                .setSubject(username)
+                .setSubject(userName)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date().getTime() + jwtExpirationMs)))
                 .signWith(key())
