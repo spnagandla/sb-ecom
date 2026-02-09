@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -132,5 +133,38 @@ public class AuthController {
                 new MessageResponse("User registered successfully!",true, Instant.now()));
 
     }
+
+    @GetMapping("/user/username")
+    public String currentUsename(Authentication authentication){
+        return authentication != null ? authentication.getName() :"null";
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<?> userDetails(Authentication authentication){
+        //authentication.getPrincipal() returns a generic Object, and Java needs an explicit cast so you can access fields (id, etc.) that exist only in your custom user implementation.
+        UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        UserInfoResponse response = new UserInfoResponse(
+                userDetails.getId(),
+                userDetails.getUsername(),
+                roles
+        );
+        return ResponseEntity.ok().body(response);
+    }
+
+
+    @PostMapping("/signout")
+    public ResponseEntity<?> logoutUser() {
+
+        ResponseCookie deleteCookie = jwtUtils.getCleanJwtCookie();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body(new MessageResponse("Signed out successfully"));
+    }
+
 }
 

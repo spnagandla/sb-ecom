@@ -66,6 +66,18 @@ public class JwtUtils {
                 .build();
     }
 
+
+    public ResponseCookie getCleanJwtCookie() {
+        log.info("Generating the  clean/empty Cookie");
+        return ResponseCookie.from(cookieName,null)
+                .path("/api") //“Only send this cookie for URLs starting with /api”
+                .maxAge(0)
+                .httpOnly(true)
+                .build();
+    }
+
+
+
     //Generating token from username
     public String generateTokenNameFromUserName(String userName){
         return Jwts.builder()

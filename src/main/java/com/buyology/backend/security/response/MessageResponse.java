@@ -15,4 +15,9 @@ public class MessageResponse {
     private Boolean success;
     private Instant timeStamp;
 
+    public MessageResponse(String message) {
+        this.message = message;
+        this.success = true;
+        this.timeStamp = Instant.now();
+    }
 }
