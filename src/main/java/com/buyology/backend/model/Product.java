@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Data
@@ -48,6 +49,9 @@ public class Product {
     @ManyToOne
     @JoinColumn(name ="seller_id")
     private User user;
+
+    @OneToMany(mappedBy = "product", cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    private List<CartItem> cartItem;
 
     @PrePersist
     public void setCreatedDateTime(){
