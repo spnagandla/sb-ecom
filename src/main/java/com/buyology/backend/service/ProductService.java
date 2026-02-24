@@ -5,6 +5,8 @@ import com.buyology.backend.dto.response.ProductResponseDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.AccessDeniedException;
+
 @Service
 public interface ProductService {
     ProductDTO createProduct(Long categoryId,ProductDTO productDTO);

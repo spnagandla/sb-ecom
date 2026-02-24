@@ -1,6 +1,6 @@
 package com.buyology.backend.exception;
 
-import com.buyology.backend.dto.response.APIResponse;
+import com.buyology.backend.dto.response.APIErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.security.access.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,8 +31,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<APIResponse> resourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
-        APIResponse apiResponse = new APIResponse(ex.getMessage(),
+    public ResponseEntity<APIErrorResponse> resourceNotFoundException(ResourceNotFoundException ex, HttpServletRequest request) {
+        APIErrorResponse apiResponse = new APIErrorResponse(ex.getMessage(),
                 false,
                 HttpStatus.NOT_FOUND.value(),
                 LocalDateTime.now(),
@@ -42,8 +43,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(APIException.class)
-    public ResponseEntity<APIResponse> apiException(APIException ex, HttpServletRequest request) {
-        APIResponse apiResponse = new APIResponse(ex.getMessage(),
+    public ResponseEntity<APIErrorResponse> apiException(APIException ex, HttpServletRequest request) {
+        APIErrorResponse apiResponse = new APIErrorResponse(ex.getMessage(),
                 false,
                 HttpStatus.BAD_REQUEST.value(),
                 LocalDateTime.now(),
@@ -77,6 +78,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleInternalServer(InternalServerException ex) {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
                 .body(Map.of("message", ex.getMessage()));
     }
 

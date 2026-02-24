@@ -16,29 +16,28 @@ public class AuthUtil {
         this.userRepository = userRepository;
     }
 
-    public String loggedInEmail(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userRepository.findByUserName(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + authentication.getName()));
+    public User getAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        return user.getEmail();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            throw new UsernameNotFoundException("No authenticated user found");
+        }
+
+        return userRepository.findByUserName(auth.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found with username: " + auth.getName()
+                ));
     }
 
-    public Long loggedInUserId(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userRepository.findByUserName(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + authentication.getName()));
-
-        return user.getUserId();
+    public String loggedInEmail() {
+        return getAuthenticatedUser().getEmail();
     }
 
-    public User loggedInUser(){
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        User user = userRepository.findByUserName(authentication.getName())
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + authentication.getName()));
-        return user;
-
+    public Long loggedInUserId() {
+        return getAuthenticatedUser().getUserId();
     }
 
+    public User loggedInUser() {
+        return getAuthenticatedUser();
+    }
 }

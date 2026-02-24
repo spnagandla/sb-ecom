@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class APIResponse {
+public class APIErrorResponse {
 
     private String message;
     private boolean success;

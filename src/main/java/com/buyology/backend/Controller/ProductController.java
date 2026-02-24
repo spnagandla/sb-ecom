@@ -1,10 +1,8 @@
 package com.buyology.backend.Controller;
 
 import com.buyology.backend.config.AppConstants;
-import com.buyology.backend.dto.CategoryDTO;
 import com.buyology.backend.dto.ProductDTO;
 import com.buyology.backend.dto.response.ProductResponseDTO;
-import com.buyology.backend.model.Product;
 import com.buyology.backend.service.ProductService;
 import jakarta.validation.Valid;
 import org.slf4j.LoggerFactory;
@@ -12,6 +10,7 @@ import org.slf4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +23,7 @@ public class ProductController {
 
     public ProductController(ProductService productService){ this.productService = productService;}
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_SELLER')")
     @PostMapping("/admin/categories/{categoryId}/product")
     public ResponseEntity<ProductDTO> createProduct(
             @Valid @RequestBody ProductDTO productDTO,

@@ -5,11 +5,11 @@ import com.buyology.backend.dto.response.ProductResponseDTO;
 import com.buyology.backend.exception.BadRequestException;
 import com.buyology.backend.exception.InternalServerException;
 import com.buyology.backend.exception.ResourceNotFoundException;
-import com.buyology.backend.model.Category;
-import com.buyology.backend.model.Product;
+import com.buyology.backend.model.*;
 import com.buyology.backend.pagination.PaginationUtil;
 import com.buyology.backend.repository.CategoryRepository;
 import com.buyology.backend.repository.ProductRepository;
+import com.buyology.backend.utils.AuthUtil;
 import com.buyology.backend.utils.SupabaseStorageClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
 import static com.buyology.backend.utils.CommonMethods.*;
@@ -36,27 +37,42 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
     private final SupabaseStorageClient supabaseStorageClient;
+    private final AuthUtil authUtil;
     private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     public ProductServiceImpl(CategoryRepository categoryRepository,
                               ProductRepository productRepository,
                               ModelMapper modelMapper,
-                              SupabaseStorageClient supabaseStorageClient) {
+                              SupabaseStorageClient supabaseStorageClient,
+                              AuthUtil authUtil) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.modelMapper = modelMapper;
         this.supabaseStorageClient = supabaseStorageClient;
+        this.authUtil = authUtil;
     }
 
     @Override
     @Transactional
-    public ProductDTO createProduct(Long categoryId, ProductDTO productDTO) {
+    public ProductDTO createProduct(Long categoryId, ProductDTO productDTO){
         log.info("Request to save the product @SERVICE");
+
+        User currentUser = authUtil.getAuthenticatedUser();
+        boolean allowed = currentUser.getRoles()
+                .stream().map(Role::getRoleName)
+                .anyMatch(userRoles -> userRoles == UserRoles.ROLE_SELLER ||
+                        userRoles == UserRoles.ROLE_ADMIN);
+
+        if(!allowed){
+            throw new AccessDeniedException("Only SELLER or ADMIN can add products");
+        }
         Product product = modelMapper.map(productDTO, Product.class);
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("category", "categoryId", categoryId));
 
         product.setCategory(category);
+
+        product.setUser(currentUser);
 
         BigDecimal price = product.getPrice();
         if (price == null) {

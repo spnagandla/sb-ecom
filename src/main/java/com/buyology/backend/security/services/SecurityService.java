@@ -67,7 +67,7 @@ public class SecurityService {
         String normalized = (role == null ? " " : role.trim().toLowerCase());
         return switch (normalized) {
             case "admin" -> getRole(UserRoles.ROLE_ADMIN);
-            case "Seller" -> getRole(UserRoles.ROLE_SELLER);
+            case "seller" -> getRole(UserRoles.ROLE_SELLER);
             default -> getRole(UserRoles.ROLE_USER);
         };
     }
