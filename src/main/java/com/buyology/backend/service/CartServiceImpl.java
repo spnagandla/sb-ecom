@@ -10,6 +10,7 @@ import com.buyology.backend.model.Product;
 import com.buyology.backend.repository.CartItemRepository;
 import com.buyology.backend.repository.CartRepository;
 import com.buyology.backend.repository.ProductRepository;
+import com.buyology.backend.repository.UserRepository;
 import com.buyology.backend.utils.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CartServiceImpl implements CartService {
@@ -92,6 +94,46 @@ public class CartServiceImpl implements CartService {
         log.info("Cart total updated: cartId={}, newTotal={}", cart.getCartId(), cart.getTotalPrice());
 
         return toCartDTO(cart);
+    }
+
+    @Override
+    public List<CartDTO> getAllCarts() {
+
+
+        List<Cart> carts = cartRepository.findAll();
+
+        if(carts.size() == 0){
+            throw new APIException("no carts found");
+        }
+
+        return carts.stream()
+                .map(cart -> {
+                    CartDTO cartDTO = modelMapper.map(cart,CartDTO.class);
+                    List<ProductDTO> products = cart.getCartItems().stream()
+                            .map( product -> modelMapper.map(product, ProductDTO.class))
+                            .collect(Collectors.toList());
+                    cartDTO.setProducts(products);
+                    return cartDTO;
+                }).collect(Collectors.toList());
+
+    }
+
+    @Override
+    public CartDTO getUserCart(String email) {
+            Cart cart = cartRepository.findCartByEmail(email);
+            if(cart == null){
+                throw new ResourceNotFoundException("No cart found!");
+            }
+
+            CartDTO cartDTO = modelMapper.map(cart,CartDTO.class);
+
+            cart.getCartItems().forEach(c -> c.getProduct().setQuantity(c.getQuantity()));
+
+            List<ProductDTO> products = cart.getCartItems().stream()
+                    .map(p -> modelMapper.map(p.getProduct(),ProductDTO.class))
+                    .toList();
+            cartDTO.setProducts(products);
+            return cartDTO;
     }
 
     private void validateQuantity(Integer quantity) {

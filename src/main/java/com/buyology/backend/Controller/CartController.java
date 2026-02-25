@@ -1,26 +1,30 @@
 package com.buyology.backend.Controller;
 
 import com.buyology.backend.dto.CartDTO;
+import com.buyology.backend.model.Cart;
 import com.buyology.backend.service.CartService;
+import com.buyology.backend.utils.AuthUtil;
+import jakarta.persistence.GeneratedValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 public class CartController {
 
     private final CartService cartService;
+    private final AuthUtil authUtil;
     private static final Logger log = LoggerFactory.getLogger(CartController.class);
 
 
-    public CartController(CartService cartService){
+    public CartController(CartService cartService, AuthUtil authUtil){
         this.cartService = cartService;
+        this.authUtil = authUtil;
     }
 
     @PostMapping("/carts/products/{productId}/quantity/{quantity}")
@@ -30,5 +34,17 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addProductToCart(productId,quantity));
     }
 
+    @GetMapping("/carts")
+    public ResponseEntity<List<CartDTO>> getCarts(){
+        List<CartDTO> cartDTOs = cartService.getAllCarts();
+        return ResponseEntity.ok(cartDTOs);
+    }
+
+
+    @GetMapping("/carts/me")
+    public ResponseEntity<CartDTO> getUserCart() {
+        String email = authUtil.loggedInEmail();
+        return ResponseEntity.ok(cartService.getUserCart(email));
+    }
 
 }
