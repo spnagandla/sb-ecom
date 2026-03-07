@@ -28,7 +28,7 @@ public class LowStockScheduler {
     }
 
     // Runs every day at 1:50 AM by default
-    @Scheduled(cron = "${alerts.stock.cron:0 50 1 * * *}")
+    @Scheduled(cron = "${alerts.stock.cron:0 15 2 * * *}")
     public void checkLowStockProducts() {
         List<Product> lowStockProducts = productRepository.findByQuantityLessThanEqual(lowStockThreshold);
 
