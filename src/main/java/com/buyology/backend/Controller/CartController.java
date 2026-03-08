@@ -47,4 +47,10 @@ public class CartController {
         return ResponseEntity.ok(cartService.getUserCart(email));
     }
 
+    @PatchMapping("/cart/products/{productId}/quantity/{operation}")
+    public ResponseEntity<CartDTO>updateCartProductQuantity(@PathVariable Long productId,
+                                                            @PathVariable String operation){
+        return ResponseEntity.ok(cartService.updateProductQuantityInCart(productId,operation.equalsIgnoreCase("delete") ? -1 : 1));
+    }
+
 }

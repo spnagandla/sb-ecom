@@ -136,6 +136,76 @@ public class CartServiceImpl implements CartService {
             return cartDTO;
     }
 
+    @Transactional
+    @Override
+    public CartDTO updateProductQuantityInCart(Long productId, Integer delta) {
+
+        String email = authUtil.loggedInEmail();
+
+        CartItem cartItem = cartItemRepository.findCartItemForUserAndProduct(email, productId)
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
+
+        Cart cart = cartItem.getCart();
+        Product product = cartItem.getProduct();
+
+        int currentQty = cartItem.getQuantity() == null ? 0 : cartItem.getQuantity();
+        int newQty = currentQty + delta;
+
+        // Prevent negative quantities
+        if (newQty < 0) {
+            throw new APIException("Quantity cannot be negative");
+        }
+
+        // Stock validation only when increasing
+        Integer stock = product.getQuantity();
+        if (delta == 1) {
+            if (stock == null || stock <= 0) {
+                throw new APIException(product.getProductName() + " is not available");
+            }
+            if (newQty > stock) {
+                throw new APIException("Only " + stock + " available for " + product.getProductName());
+            }
+        }
+
+        // Price math (BigDecimal)
+        BigDecimal unitPrice = product.getSpecialPrice() != null ? product.getSpecialPrice() : BigDecimal.ZERO;
+        BigDecimal cartTotal = cart.getTotalPrice() != null ? cart.getTotalPrice() : BigDecimal.ZERO;
+
+        // Update cart total by delta amount
+        BigDecimal deltaAmount = unitPrice.multiply(BigDecimal.valueOf(delta));
+        cart.setTotalPrice(cartTotal.add(deltaAmount));
+
+        // Update or delete item
+        if (newQty == 0) {
+            cartItemRepository.delete(cartItem);
+        } else {
+            cartItem.setQuantity(newQty);
+            cartItem.setProductPrice(unitPrice);
+            cartItem.setDiscount(product.getDiscount() == null ? BigDecimal.ZERO : product.getDiscount());
+            // no need to call save explicitly inside @Transactional (ok if you do)
+        }
+
+        // Return DTO (use your existing mapper logic)
+        return convertToCartDTO(cart);
+    }
+
+
+    private CartDTO convertToCartDTO(Cart cart) {
+        CartDTO dto = new CartDTO();
+        dto.setCartID(cart.getCartId());
+        dto.setTotalPrice(cart.getTotalPrice() == null ? 0.0 : cart.getTotalPrice().doubleValue());
+
+        List<ProductDTO> products = cart.getCartItems().stream()
+                .map(item -> {
+                    ProductDTO p = modelMapper.map(item.getProduct(), ProductDTO.class);
+                    p.setQuantity(item.getQuantity()); // quantity in cart comes from CartItem
+                    return p;
+                })
+                .toList();
+
+        dto.setProducts(products);
+        return dto;
+    }
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity <= 0) {
             throw new APIException("Quantity must be greater than 0");

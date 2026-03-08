@@ -29,7 +29,9 @@ public class TelegramStockAlertService {
     private String chatId;
 
     public TelegramStockAlertService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("https://api.telegram.org").build();
+        this.webClient = webClientBuilder
+                .baseUrl("https://api.telegram.org")
+                .build();
     }
 
     public void sendLowStockAlert(List<Product> lowStockProducts, int threshold) {

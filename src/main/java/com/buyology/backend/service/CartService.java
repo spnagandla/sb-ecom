@@ -1,6 +1,7 @@
 package com.buyology.backend.service;
 
 import com.buyology.backend.dto.CartDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -10,4 +11,7 @@ public interface CartService {
     List<CartDTO> getAllCarts();
 
     CartDTO getUserCart(String email);
+
+    @Transactional
+    CartDTO updateProductQuantityInCart(Long productId, Integer delta);
 }
