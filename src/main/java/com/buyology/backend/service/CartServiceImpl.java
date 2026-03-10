@@ -10,12 +10,12 @@ import com.buyology.backend.model.Product;
 import com.buyology.backend.repository.CartItemRepository;
 import com.buyology.backend.repository.CartRepository;
 import com.buyology.backend.repository.ProductRepository;
-import com.buyology.backend.repository.UserRepository;
 import com.buyology.backend.utils.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -47,10 +47,9 @@ public class CartServiceImpl implements CartService {
 
         validateQuantity(quantity);
 
-        Cart cart = getOrCreateCartForLoggedInUser();
+        Cart cart = getOrCreateCartForLoggedInUserWithLock();
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("product", "productId", productId));
+        Product product = fetchProduct(productId);
 
         log.info("Add to cart: email={}, cartId={}, productId={}, requestedQty={}",
                 authUtil.loggedInEmail(), cart.getCartId(), productId, quantity);
@@ -134,11 +133,15 @@ public class CartServiceImpl implements CartService {
 
         String email = authUtil.loggedInEmail();
 
-        CartItem cartItem = cartItemRepository.findCartItemForUserAndProduct(email, productId)
-                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
+        Cart cart = cartRepository.findCartByEmailForUpdate(email);
+        if (cart == null) {
+            throw new ResourceNotFoundException("No cart found!");
+        }
 
-        Cart cart = cartItem.getCart();
-        Product product = cartItem.getProduct();
+        Product product = fetchProduct(productId);
+
+        CartItem cartItem = cartItemRepository.findByCartAndProductForUpdate(cart.getCartId(), productId)
+                .orElseThrow(() -> new ResourceNotFoundException("CartItem", "productId", productId));
 
         int currentQty = cartItem.getQuantity() == null ? 0 : cartItem.getQuantity();
         int newQty = currentQty + delta;
@@ -177,6 +180,8 @@ public class CartServiceImpl implements CartService {
             // no need to call save explicitly inside @Transactional (ok if you do)
         }
 
+        cartRepository.save(cart);
+
         // Return DTO (use your existing mapper logic)
         return convertToCartDTO(cart);
     }
@@ -204,18 +209,32 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-    private Cart getOrCreateCartForLoggedInUser() {
+    private Cart getOrCreateCartForLoggedInUserWithLock() {
         String email = authUtil.loggedInEmail();
-        Cart existing = cartRepository.findCartByEmail(email);
+        Cart existing = cartRepository.findCartByEmailForUpdate(email);
         if (existing != null) return existing;
 
         Cart cart = new Cart();
         cart.setTotalPrice(BigDecimal.ZERO);
         cart.setUser(authUtil.loggedInUser());
 
-        Cart saved = cartRepository.save(cart);
-        log.info("New cart created: email={}, cartId={}", email, saved.getCartId());
-        return saved;
+        try {
+            Cart saved = cartRepository.saveAndFlush(cart);
+            log.info("New cart created: email={}, cartId={}", email, saved.getCartId());
+            return saved;
+        } catch (DataIntegrityViolationException ex) {
+            log.warn("Cart already created concurrently for email={}. Reusing existing cart.", email);
+            Cart concurrent = cartRepository.findCartByEmailForUpdate(email);
+            if (concurrent != null) {
+                return concurrent;
+            }
+            throw ex;
+        }
+    }
+
+    private Product fetchProduct(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("product", "productId", productId));
     }
 
     private void ensureProductAvailable(Product product, int requestedQty) {
