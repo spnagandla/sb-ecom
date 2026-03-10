@@ -22,7 +22,7 @@ jobs:
       # Step 2: Initialize CodeQL for Java
       # This sets up the CodeQL engine and loads Java security rules
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: java
 
@@ -44,4 +44,4 @@ jobs:
       # This scans the code and uploads results to:
       # GitHub → Security → Code scanning alerts
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
