@@ -4,6 +4,7 @@ import com.buyology.backend.dto.response.APIErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -98,10 +99,11 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", "The resource was modified by another request. Please refresh and retry."));
     }
 
-    @ExceptionHandler(CannotAcquireLockException.class)
-    public ResponseEntity<Map<String, String>> handlePessimisticLockFailure(CannotAcquireLockException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("message", "The resource is busy. Please retry in a moment."));
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<Map<String,String>> handleLockFailure(PessimisticLockingFailureException ex){
+        Map<String,String> response = new HashMap<>();
+        response.put("error", "Resource conflict due to concurrent update");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
 }
