@@ -1,8 +1,11 @@
 package com.buyology.backend.repository;
 
 import com.buyology.backend.model.CartItem;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
@@ -21,6 +24,16 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
             where u.email = ?1 and p.productId = ?2
             """)
     Optional<CartItem> findCartItemForUserAndProduct(String email, Long productId);
+
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select ci from CartItem ci
+            where ci.cart.cartId = :cartId and ci.product.productId = :productId
+            """)
+    Optional<CartItem> findByCartAndProductForUpdate(@Param("cartId") Long cartId,
+                                                     @Param("productId") Long productId);
+
 }
 
 

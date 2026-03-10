@@ -19,5 +19,6 @@ public class ProductDTO {
     private BigDecimal price;
     private BigDecimal specialPrice;
     private BigDecimal discount;
+    private Long version;
 
 }
