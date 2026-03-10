@@ -10,7 +10,6 @@ import com.buyology.backend.model.Product;
 import com.buyology.backend.repository.CartItemRepository;
 import com.buyology.backend.repository.CartRepository;
 import com.buyology.backend.repository.ProductRepository;
-import com.buyology.backend.repository.UserRepository;
 import com.buyology.backend.utils.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
@@ -47,10 +46,9 @@ public class CartServiceImpl implements CartService {
 
         validateQuantity(quantity);
 
-        Cart cart = getOrCreateCartForLoggedInUser();
+        Cart cart = getOrCreateCartForLoggedInUserWithLock();
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("product", "productId", productId));
+        Product product = fetchProductForUpdate(productId);
 
         log.info("Add to cart: email={}, cartId={}, productId={}, requestedQty={}",
                 authUtil.loggedInEmail(), cart.getCartId(), productId, quantity);
@@ -204,9 +202,9 @@ public class CartServiceImpl implements CartService {
         }
     }
 
-    private Cart getOrCreateCartForLoggedInUser() {
+    private Cart getOrCreateCartForLoggedInUserWithLock() {
         String email = authUtil.loggedInEmail();
-        Cart existing = cartRepository.findCartByEmail(email);
+        Cart existing = cartRepository.findCartByEmailForUpdate(email);
         if (existing != null) return existing;
 
         Cart cart = new Cart();
@@ -215,7 +213,15 @@ public class CartServiceImpl implements CartService {
 
         Cart saved = cartRepository.save(cart);
         log.info("New cart created: email={}, cartId={}", email, saved.getCartId());
-        return saved;
+        return cartRepository.findCartByEmailForUpdate(email);
+    }
+
+    private Product fetchProductForUpdate(Long productId) {
+        Product product = productRepository.findByIdForUpdate(productId);
+        if (product == null) {
+            throw new ResourceNotFoundException("product", "productId", productId);
+        }
+        return product;
     }
 
     private void ensureProductAvailable(Product product, int requestedQty) {

@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -88,5 +91,17 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", ex.getMessage()));
     }
 
+
+    @ExceptionHandler({OptimisticLockingFailureException.class, ObjectOptimisticLockingFailureException.class})
+    public ResponseEntity<Map<String, String>> handleOptimisticLocking(Exception ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "The resource was modified by another request. Please refresh and retry."));
+    }
+
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<Map<String, String>> handlePessimisticLockFailure(CannotAcquireLockException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", "The resource is busy. Please retry in a moment."));
+    }
 
 }

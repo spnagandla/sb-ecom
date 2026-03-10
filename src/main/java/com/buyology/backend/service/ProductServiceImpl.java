@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import java.util.List;
 import java.util.UUID;
 import static com.buyology.backend.utils.CommonMethods.*;
@@ -131,12 +132,21 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
         Product product = modelMapper.map(productDTO, Product.class);
 
         log.info("Request To update the product @SERVICE");
         Product exsistingProduct = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("product", "productId", productId));
+
+        if (productDTO.getVersion() == null) {
+            throw new BadRequestException("Product version is required for optimistic locking");
+        }
+
+        if (!productDTO.getVersion().equals(exsistingProduct.getVersion())) {
+            throw new OptimisticLockingFailureException("Product was modified by another transaction");
+        }
 
         exsistingProduct.setProductName(product.getProductName());
         exsistingProduct.setDescription(product.getDescription());
@@ -145,8 +155,8 @@ public class ProductServiceImpl implements ProductService {
         exsistingProduct.setDiscount(product.getDiscount());
         exsistingProduct.setSpecialPrice(getSpecialPrice(product.getPrice(), product.getDiscount()));
 
-        Product savedProduct = productRepository.save(exsistingProduct);
-        log.info("Saved the Updated Product To DB @SERVICE");
+        Product savedProduct = productRepository.saveAndFlush(exsistingProduct);
+        log.info("Saved the Updated Product To DB @SERVICE with optimistic version={}", savedProduct.getVersion());
         return modelMapper.map(savedProduct, ProductDTO.class);
     }
 

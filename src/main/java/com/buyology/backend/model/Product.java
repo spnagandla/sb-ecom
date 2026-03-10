@@ -37,6 +37,9 @@ public class Product {
     private BigDecimal discount;
     private BigDecimal specialPrice;
 
+    @Version
+    private Long version;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Column(updatable = false)
     private LocalDateTime createdAt;
