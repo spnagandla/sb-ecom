@@ -28,6 +28,10 @@ jobs:
 
       # 3) VERIFY step (tests + basic checks)
       - name: Maven verify
+        env:
+          INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
+          INFISICAL_CLIENT_SECRET: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
         run: mvn -B -U verify
 
       # 4) Login to Docker Hub (so we can push)
