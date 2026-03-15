@@ -20,7 +20,7 @@ public class InfisicalPropertySource implements ApplicationContextInitializer<Co
     private static final Logger log = LoggerFactory.getLogger(InfisicalPropertySource.class);
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
-        log.info("🔐 InfisicalPropertySource starting...");
+        log.info("🔐 Started getting the secrets from infisical...");
         try {
 
             // Step 1: Read the 3 identity values from environment variables
@@ -94,7 +94,7 @@ Normal Spring without Infisical:
 Your app with Infisical:
   App starts → runs InfisicalPropertySource FIRST
              → logs into Infisical with 3 identity vars
-             → downloads all 6 secrets
+             → downloads all secrets
              → gives them to Spring
              → Spring reads ${DB_URL} → ✅ finds real value → app runs
  */
