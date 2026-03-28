@@ -35,6 +35,10 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     Optional<CartItem> findByCartAndProductForUpdate(@Param("cartId") Long cartId,
                                                      @Param("productId") Long productId);
 
+    // NOTE:
+    // @Modifying is required for custom JPQL UPDATE/DELETE queries.
+    // Without it, Spring Data treats @Query as a read/select query and the DELETE
+    // statement won't be executed with write semantics.
     @Modifying
     @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId = ?1 AND ci.product.productId = ?2")
     void deleteCartItemByCartIdAndProductId(Long cartId, Long productId);
