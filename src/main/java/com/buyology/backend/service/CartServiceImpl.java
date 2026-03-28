@@ -223,6 +223,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void updateProductInCarts(Long cartId, Long productId) {
 
         Cart cart = cartRepository.findById(cartId)
@@ -233,11 +234,19 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepository.findCartItemByCartIdAndProductId(cartId,productId);
 
         if(cartItem == null){
-            throw new APIException("Product " + product.getProductName() + " not available in the cart!!");
+            log.warn("Skipping cart sync because cart item is missing. cartId={}, productId={}", cartId, productId);
+            return;
         }
 
+        cartItem.setProductPrice(product.getSpecialPrice() == null ? BigDecimal.ZERO : product.getSpecialPrice());
+        cartItem.setDiscount(product.getDiscount() == null ? BigDecimal.ZERO : product.getDiscount());
+        cartItemRepository.save(cartItem);
 
+        cart.setTotalPrice(recalculateCartTotal(cart));
+        cartRepository.save(cart);
 
+        log.info("Cart product synchronized after product update. cartId={}, productId={}, newUnitPrice={}, cartTotal={}",
+                cartId, productId, cartItem.getProductPrice(), cart.getTotalPrice());
 
     }
 
