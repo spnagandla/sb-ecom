@@ -4,6 +4,7 @@ import com.buyology.backend.model.CartItem;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,7 +13,7 @@ import java.util.Optional;
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     @Query(" SELECT ci FROM CartItem ci WHERE ci.cart.cartId = ?1 AND ci.product.productId = ?2")
-    CartItem findCartItemByProductIdAndCartId(Long cartId, Long productId);
+    CartItem findCartItemByCartIdAndProductId(Long cartId, Long productId);
 
 
 
@@ -34,8 +35,13 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     Optional<CartItem> findByCartAndProductForUpdate(@Param("cartId") Long cartId,
                                                      @Param("productId") Long productId);
 
+    // NOTE:
+    // @Modifying is required for custom JPQL UPDATE/DELETE queries.
+    // Without it, Spring Data treats @Query as a read/select query and the DELETE
+    // statement won't be executed with write semantics.
+    @Modifying
     @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId = ?1 AND ci.product.productId = ?2")
-    void deleteCartItemByProductIdAndCartId(Long cartId, Long productId);
+    void deleteCartItemByCartIdAndProductId(Long cartId, Long productId);
 }
 
 

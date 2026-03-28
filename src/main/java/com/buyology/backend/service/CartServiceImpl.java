@@ -56,7 +56,7 @@ public class CartServiceImpl implements CartService {
 
         // Find item if it already exists in the cart
         CartItem cartItem = cartItemRepository
-                .findCartItemByProductIdAndCartId(cart.getCartId(), product.getProductId());
+                .findCartItemByCartIdAndProductId(cart.getCartId(), product.getProductId());
 
         int currentCartQty = (cartItem == null) ? 0 : cartItem.getQuantity();
         int newCartQty = currentCartQty + quantity;
@@ -194,7 +194,7 @@ public class CartServiceImpl implements CartService {
                     return new ResourceNotFoundException("Cart", "cartId", cartId);
                 });
 
-        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(productId, cartId);
+        CartItem cartItem = cartItemRepository.findCartItemByCartIdAndProductId(cartId, productId);
 
         if (cartItem == null) {
             log.error("Product not found in cart. cartId={}, productId={}", cartId, productId);
@@ -215,7 +215,7 @@ public class CartServiceImpl implements CartService {
                 itemTotal,
                 cart.getTotalPrice());
 
-        cartItemRepository.deleteCartItemByProductIdAndCartId(productId, cartId);
+        cartItemRepository.deleteCartItemByCartIdAndProductId(cartId, productId);
 
         log.info("Product removed successfully from cart. cartId={}, productId={}", cartId, productId);
 
