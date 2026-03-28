@@ -101,15 +101,15 @@ public class CartServiceImpl implements CartService {
 
         List<Cart> carts = cartRepository.findAll();
 
-        if(carts.size() == 0){
+        if (carts.size() == 0) {
             throw new APIException("no carts found");
         }
 
         return carts.stream()
                 .map(cart -> {
-                    CartDTO cartDTO = modelMapper.map(cart,CartDTO.class);
+                    CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
                     List<ProductDTO> products = cart.getCartItems().stream()
-                            .map( product -> modelMapper.map(product, ProductDTO.class))
+                            .map(product -> modelMapper.map(product, ProductDTO.class))
                             .collect(Collectors.toList());
                     cartDTO.setProducts(products);
                     return cartDTO;
@@ -119,12 +119,12 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartDTO getUserCart(String email) {
-            Cart cart = cartRepository.findCartByEmail(email);
-            if(cart == null){
-                throw new ResourceNotFoundException("No cart found!");
-            }
+        Cart cart = cartRepository.findCartByEmail(email);
+        if (cart == null) {
+            throw new ResourceNotFoundException("No cart found!");
+        }
 
-            return toCartDTO(cart);
+        return toCartDTO(cart);
     }
 
     @Transactional
@@ -164,15 +164,11 @@ public class CartServiceImpl implements CartService {
 
         // Price math (BigDecimal)
         BigDecimal unitPrice = product.getSpecialPrice() != null ? product.getSpecialPrice() : BigDecimal.ZERO;
-        BigDecimal cartTotal = cart.getTotalPrice() != null ? cart.getTotalPrice() : BigDecimal.ZERO;
-
-        // Update cart total by delta amount
-        BigDecimal deltaAmount = unitPrice.multiply(BigDecimal.valueOf(delta));
-        cart.setTotalPrice(cartTotal.add(deltaAmount));
 
         // Update or delete item
         if (newQty == 0) {
             cartItemRepository.delete(cartItem);
+            cart.getCartItems().remove(cartItem);
         } else {
             cartItem.setQuantity(newQty);
             cartItem.setProductPrice(unitPrice);
@@ -180,10 +176,50 @@ public class CartServiceImpl implements CartService {
             // no need to call save explicitly inside @Transactional (ok if you do)
         }
 
+        cart.setTotalPrice(recalculateCartTotal(cart));
         cartRepository.save(cart);
 
         // Return DTO (use your existing mapper logic)
         return convertToCartDTO(cart);
+    }
+
+    @Override
+    @Transactional
+    public String deleteProductFromCart(Long cartId, Long productId) {
+        log.info("Attempting to remove product from cart. cartId={}, productId={}", cartId, productId);
+
+        Cart cart = cartRepository.findById(cartId)
+                .orElseThrow(() -> {
+                    log.error("Cart not found. cartId={}", cartId);
+                    return new ResourceNotFoundException("Cart", "cartId", cartId);
+                });
+
+        CartItem cartItem = cartItemRepository.findCartItemByProductIdAndCartId(productId, cartId);
+
+        if (cartItem == null) {
+            log.error("Product not found in cart. cartId={}, productId={}", cartId, productId);
+            throw new ResourceNotFoundException("Product", "productId", productId);
+        }
+
+        BigDecimal itemTotal = cartItem.getProductPrice()
+                .multiply(BigDecimal.valueOf(cartItem.getQuantity()));
+
+        BigDecimal newTotal = cart.getTotalPrice().subtract(itemTotal);
+        cart.setTotalPrice(newTotal.max(BigDecimal.ZERO));
+
+        log.info("Deleting cart item. cartId={}, productId={}, productName={}, quantity={}, itemTotal={}, updatedCartTotal={}",
+                cartId,
+                productId,
+                cartItem.getProduct().getProductName(),
+                cartItem.getQuantity(),
+                itemTotal,
+                cart.getTotalPrice());
+
+        cartItemRepository.deleteCartItemByProductIdAndCartId(productId, cartId);
+
+        log.info("Product removed successfully from cart. cartId={}, productId={}", cartId, productId);
+
+        return "Product " + cartItem.getProduct().getProductName() + " removed from the cart";
     }
 
 
@@ -247,6 +283,16 @@ public class CartServiceImpl implements CartService {
             throw new APIException("Please order " + product.getProductName()
                     + " less than or equal to available quantity " + available + ".");
         }
+    }
+
+    private BigDecimal recalculateCartTotal(Cart cart){
+        return cart.getCartItems().stream()
+                .map(item -> {
+                    BigDecimal itemPrice = item.getProductPrice() == null ? BigDecimal.ZERO : item.getProductPrice();
+                    int itemQty = item.getQuantity() == null ? 0 : item.getQuantity();
+                    return itemPrice.multiply(BigDecimal.valueOf(itemQty));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private CartItem buildCartItem(Cart cart, Product product, int quantity) {

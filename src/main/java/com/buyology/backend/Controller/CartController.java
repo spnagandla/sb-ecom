@@ -22,20 +22,20 @@ public class CartController {
     private static final Logger log = LoggerFactory.getLogger(CartController.class);
 
 
-    public CartController(CartService cartService, AuthUtil authUtil){
+    public CartController(CartService cartService, AuthUtil authUtil) {
         this.cartService = cartService;
         this.authUtil = authUtil;
     }
 
     @PostMapping("/carts/products/{productId}/quantity/{quantity}")
     public ResponseEntity<CartDTO> addProductToCart(@PathVariable Long productId,
-                                                    @PathVariable Integer quantity){
+                                                    @PathVariable Integer quantity) {
         log.info("Requested to add product to cart");
-        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addProductToCart(productId,quantity));
+        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addProductToCart(productId, quantity));
     }
 
     @GetMapping("/carts")
-    public ResponseEntity<List<CartDTO>> getCarts(){
+    public ResponseEntity<List<CartDTO>> getCarts() {
         List<CartDTO> cartDTOs = cartService.getAllCarts();
         return ResponseEntity.ok(cartDTOs);
     }
@@ -48,9 +48,16 @@ public class CartController {
     }
 
     @PatchMapping("/cart/products/{productId}/quantity/{operation}")
-    public ResponseEntity<CartDTO>updateCartProductQuantity(@PathVariable Long productId,
-                                                            @PathVariable String operation){
-        return ResponseEntity.ok(cartService.updateProductQuantityInCart(productId,operation.equalsIgnoreCase("delete") ? -1 : 1));
+    public ResponseEntity<CartDTO> updateCartProductQuantity(@PathVariable Long productId,
+                                                             @PathVariable String operation) {
+        return ResponseEntity.ok(cartService.updateProductQuantityInCart(productId, operation.equalsIgnoreCase("delete") ? -1 : 1));
+    }
+
+    @DeleteMapping("/carts/{cartId}/product/{productId}")
+    public ResponseEntity<String> deleteProductFromCart(@PathVariable Long cartId,
+                                                        @PathVariable Long productId) {
+        return ResponseEntity.ok(cartService.deleteProductFromCart(cartId, productId));
+
     }
 
 }
