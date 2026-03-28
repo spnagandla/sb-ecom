@@ -1,5 +1,6 @@
 package com.buyology.backend.service;
 
+import com.buyology.backend.dto.CartDTO;
 import com.buyology.backend.dto.ProductDTO;
 import com.buyology.backend.dto.response.ProductResponseDTO;
 import com.buyology.backend.exception.BadRequestException;
@@ -7,6 +8,7 @@ import com.buyology.backend.exception.InternalServerException;
 import com.buyology.backend.exception.ResourceNotFoundException;
 import com.buyology.backend.model.*;
 import com.buyology.backend.pagination.PaginationUtil;
+import com.buyology.backend.repository.CartRepository;
 import com.buyology.backend.repository.CategoryRepository;
 import com.buyology.backend.repository.ProductRepository;
 import com.buyology.backend.utils.AuthUtil;
@@ -29,6 +31,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 import static com.buyology.backend.utils.CommonMethods.*;
 
 @Service
@@ -37,7 +41,9 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ModelMapper modelMapper;
+    private final CartRepository cartRepository;
     private final SupabaseStorageClient supabaseStorageClient;
+    private final CartService cartService;
     private final AuthUtil authUtil;
     private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
 
@@ -45,12 +51,14 @@ public class ProductServiceImpl implements ProductService {
                               ProductRepository productRepository,
                               ModelMapper modelMapper,
                               SupabaseStorageClient supabaseStorageClient,
-                              AuthUtil authUtil) {
+                              AuthUtil authUtil,CartRepository cartRepository,CartService cartService) {
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.modelMapper = modelMapper;
         this.supabaseStorageClient = supabaseStorageClient;
         this.authUtil = authUtil;
+        this.cartRepository = cartRepository;
+        this.cartService = cartService;
     }
 
     @Override
@@ -156,6 +164,20 @@ public class ProductServiceImpl implements ProductService {
         exsistingProduct.setSpecialPrice(getSpecialPrice(product.getPrice(), product.getDiscount()));
 
         Product savedProduct = productRepository.saveAndFlush(exsistingProduct);
+
+        List<Cart> carts = cartRepository.findCartByProductId(productId);
+
+        List<CartDTO> cartDTOs = carts.stream().map(cart ->{
+            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+            List<ProductDTO> products = cart.getCartItems().stream()
+                    .map( p -> modelMapper.map(p.getProduct(),ProductDTO.class))
+                    .collect(Collectors.toList());
+            cartDTO.setProducts(products);
+            return cartDTO;
+        }).collect(Collectors.toList());
+
+        cartDTOs.forEach(cart -> cartService.updateProductInCarts(cart.getCartID(),productId));
+
         log.info("Saved the Updated Product To DB @SERVICE with optimistic version={}", savedProduct.getVersion());
         return modelMapper.map(savedProduct, ProductDTO.class);
     }
