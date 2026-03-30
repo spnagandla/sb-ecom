@@ -70,6 +70,16 @@ public class User {
     @ToString.Exclude
     @OneToOne(mappedBy = "user",cascade = {CascadeType.PERSIST,CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     private Cart cart;
+
+    public void addAddress(Address address) {
+        this.addresses.add(address);
+        address.getUsers().add(this);
+    }
+
+    public void removeAddress(Address address) {
+        this.addresses.remove(address);
+        address.getUsers().remove(this);
+    }
 }
 
 // @RequiredArgsConstructor generates a constructor for required fields only.
