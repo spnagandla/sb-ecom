@@ -43,7 +43,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         log.info("JwtAuthFilter is called for this URI: {}",request.getRequestURI());
 
         try{
-            String jwtToken = jwtUtils.getJwtFromCookie(request);
+            String jwtToken = getJwtToken(request);
             if(jwtToken != null && jwtUtils.validateJwtToken(jwtToken)){
                 String userName = jwtUtils.getUserNameFromJwt(jwtToken);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userName);
@@ -71,5 +71,15 @@ public class AuthTokenFilter extends OncePerRequestFilter {
         // Letting Spring Security know that I'm done with my custom logic.
         // It may continue with the rest of the filter chain for any further checks.
         filterChain.doFilter(request,response);
+    }
+
+    private String getJwtToken(HttpServletRequest request) {
+        String jwtTokenFromCookie = jwtUtils.getJwtFromCookie(request);
+        if(jwtTokenFromCookie != null){
+            return jwtTokenFromCookie;
+        } else{
+            String jwtTokenFromHeader = jwtUtils.getJwtFromHeader(request);
+            return jwtTokenFromHeader;
+        }
     }
 }

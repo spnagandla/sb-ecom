@@ -54,6 +54,15 @@ public class JwtUtils {
         return cookie != null ? cookie.getValue() : null;
     }
 
+    public String getJwtFromHeader(HttpServletRequest httpServletRequest){
+        log.info("Extracting the JWT from header at this point");
+        String bearerToken = httpServletRequest.getHeader("Authorization");
+        if(bearerToken != null && bearerToken.startsWith("Bearer ")){
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
     //Generate the cookie(which contains the jwt) to send to client.
     //ResponseCookie is Spring’s representation of an HTTP cookie that the SERVER sends to the CLIENT.
     public ResponseCookie generateJwtCookie(UserDetails userDetails) {

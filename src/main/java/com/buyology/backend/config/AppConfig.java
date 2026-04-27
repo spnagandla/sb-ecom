@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @EnableMethodSecurity
 public class AppConfig {
 
-    @Bean
+    @Bean // basically telling the spring here is the object I made for you and you manage it.
     public ModelMapper modelMapper(){
         return new ModelMapper();
     }
