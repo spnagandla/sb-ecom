@@ -27,3 +27,4 @@ public class SwaggerConfig {
 }
 
 //new SecurityRequirement().addList("bearerAuth") this tells this security schema is required for the accessing the api.
+// with the @Tag annotation we can group the endpoints
