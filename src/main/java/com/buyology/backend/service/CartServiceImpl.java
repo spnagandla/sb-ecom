@@ -215,6 +215,10 @@ public class CartServiceImpl implements CartService {
                 itemTotal,
                 cart.getTotalPrice());
 
+        // Remove from in-memory list to keep entity state consistent
+        cart.getCartItems().removeIf(item -> item.getProduct().getProductId().equals(productId));
+        cartRepository.save(cart);
+
         cartItemRepository.deleteCartItemByCartIdAndProductId(cartId, productId);
 
         log.info("Product removed successfully from cart. cartId={}, productId={}", cartId, productId);

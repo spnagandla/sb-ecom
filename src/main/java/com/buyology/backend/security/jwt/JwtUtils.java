@@ -71,7 +71,7 @@ public class JwtUtils {
         return ResponseCookie.from(cookieName,jwt)
                 .path("/api") //“Only send this cookie for URLs starting with /api”
                 .maxAge(24 * 60 * 60)
-                .httpOnly(false) //true → JS cannot steal JWT (protects against XSS) false → JS can read JWT (dangerous)
+                .httpOnly(true) //true → JS cannot steal JWT (protects against XSS) false → JS can read JWT (dangerous)
                 .build();
     }
 
