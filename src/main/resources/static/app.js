@@ -1,4 +1,5 @@
 const API_BASE = '/api';
+const SUPABASE_IMAGE_BASE = 'https://ehgvmynjpyuvqiylzhzx.supabase.co/storage/v1/object/public/product-images/';
 let currentUser = null;
 
 // DOM Elements
@@ -147,6 +148,18 @@ async function handleLogout() {
 }
 
 // Product Actions
+function productImageUrl(imagePath) {
+    if (!imagePath) {
+        return 'https://via.placeholder.com/250';
+    }
+
+    if (imagePath.startsWith('http')) {
+        return imagePath;
+    }
+
+    return `${SUPABASE_IMAGE_BASE}${imagePath}`;
+}
+
 async function loadProducts() {
     const grid = document.getElementById('product-grid');
     try {
@@ -160,7 +173,7 @@ async function loadProducts() {
 
         grid.innerHTML = products.map(p => `
             <div class="product-card">
-                <img src="${p.imagePath || 'https://via.placeholder.com/250'}" 
+                <img src="${productImageUrl(p.imagePath)}" 
                      alt="${p.productName}" 
                      class="product-image"
                      onerror="this.src='https://via.placeholder.com/250'">
