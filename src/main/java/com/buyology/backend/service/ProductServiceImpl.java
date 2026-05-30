@@ -101,7 +101,9 @@ public class ProductServiceImpl implements ProductService {
         Product savedProduct = productRepository.save(product);
         log.info("Successfully saved the product");
 
-        return modelMapper.map(savedProduct, ProductDTO.class);
+        ProductDTO responseDTO = modelMapper.map(savedProduct, ProductDTO.class);
+        responseDTO.setImagePath(convertToPublicUrl(savedProduct.getImagePath()));
+        return responseDTO;
     }
 
     @Override
@@ -114,7 +116,11 @@ public class ProductServiceImpl implements ProductService {
 
         List<Product> products = productPage.getContent();
         List<ProductDTO> productDto = products.stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(product -> {
+                    ProductDTO dto = modelMapper.map(product, ProductDTO.class);
+                    dto.setImagePath(convertToPublicUrl(product.getImagePath()));
+                    return dto;
+                })
                 .toList();
 
         return PaginationUtil.build(productPage, productDto, new ProductResponseDTO());
@@ -133,7 +139,11 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products = productPage.getContent();
 
         List<ProductDTO> productDTO = products.stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(product -> {
+                    ProductDTO dto = modelMapper.map(product, ProductDTO.class);
+                    dto.setImagePath(convertToPublicUrl(product.getImagePath()));
+                    return dto;
+                })
                 .toList();
 
         return PaginationUtil.build(productPage, productDTO, new ProductResponseDTO());
@@ -179,7 +189,9 @@ public class ProductServiceImpl implements ProductService {
         cartDTOs.forEach(cart -> cartService.updateProductInCarts(cart.getCartID(),productId));
 
         log.info("Saved the Updated Product To DB @SERVICE with optimistic version={}", savedProduct.getVersion());
-        return modelMapper.map(savedProduct, ProductDTO.class);
+        ProductDTO responseDTO = modelMapper.map(savedProduct, ProductDTO.class);
+        responseDTO.setImagePath(convertToPublicUrl(savedProduct.getImagePath()));
+        return responseDTO;
     }
 
     @Override
@@ -192,7 +204,9 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.deleteById(productId);
         log.info("Product With ID:{} Deleted Successfully @SERVICE", productId);
-        return modelMapper.map(existingProduct, ProductDTO.class);
+        ProductDTO responseDTO = modelMapper.map(existingProduct, ProductDTO.class);
+        responseDTO.setImagePath(convertToPublicUrl(existingProduct.getImagePath()));
+        return responseDTO;
     }
 
     @Override
@@ -224,12 +238,24 @@ public class ProductServiceImpl implements ProductService {
             Product saved = productRepository.save(product);
             log.info("Product imagePath updated in DB for productId={}", productId);
 
-            return modelMapper.map(saved, ProductDTO.class);
+            ProductDTO responseDTO = modelMapper.map(saved, ProductDTO.class);
+            responseDTO.setImagePath(convertToPublicUrl(saved.getImagePath()));
+            return responseDTO;
 
         } catch (Exception e) {
             // Server-side failure → 500
             throw new InternalServerException("Failed to upload image. Please try again later.",e);
         }
+    }
+
+    private String convertToPublicUrl(String imagePath) {
+        if (imagePath == null || imagePath.isBlank()) {
+            return null;
+        }
+        if (imagePath.startsWith("http")) {
+            return imagePath;
+        }
+        return supabaseStorageClient.publicUrl(imagePath);
     }
 
     private static BigDecimal getSpecialPrice(BigDecimal price, BigDecimal discount) {

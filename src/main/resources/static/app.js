@@ -160,7 +160,10 @@ async function loadProducts() {
 
         grid.innerHTML = products.map(p => `
             <div class="product-card">
-                <img src="${p.imagePath || 'https://via.placeholder.com/250'}" alt="${p.productName}" class="product-image">
+                <img src="${p.imagePath || 'https://via.placeholder.com/250'}" 
+                     alt="${p.productName}" 
+                     class="product-image"
+                     onerror="this.src='https://via.placeholder.com/250'">
                 <div class="product-info">
                     <h3 class="product-title">${p.productName}</h3>
                     <p class="product-price">$${p.specialPrice.toFixed(2)}</p>

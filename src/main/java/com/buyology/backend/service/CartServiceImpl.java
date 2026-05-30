@@ -31,14 +31,16 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final ModelMapper modelMapper;
     private final AuthUtil authUtil;
+    private final SupabaseStorageClient supabaseStorageClient;
 
 
-    public CartServiceImpl(ProductRepository productRepository, CartRepository cartRepository, CartItemRepository cartItemRepository, ModelMapper modelMapper, AuthUtil authUtil) {
+    public CartServiceImpl(ProductRepository productRepository, CartRepository cartRepository, CartItemRepository cartItemRepository, ModelMapper modelMapper, AuthUtil authUtil, SupabaseStorageClient supabaseStorageClient) {
         this.cartRepository = cartRepository;
         this.productRepository = productRepository;
         this.cartItemRepository = cartItemRepository;
         this.modelMapper = modelMapper;
         this.authUtil = authUtil;
+        this.supabaseStorageClient = supabaseStorageClient;
     }
 
     @Override
@@ -109,7 +111,11 @@ public class CartServiceImpl implements CartService {
                 .map(cart -> {
                     CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
                     List<ProductDTO> products = cart.getCartItems().stream()
-                            .map(product -> modelMapper.map(product, ProductDTO.class))
+                            .map(item -> {
+                                ProductDTO dto = modelMapper.map(item.getProduct(), ProductDTO.class);
+                                dto.setImagePath(convertToPublicUrl(item.getProduct().getImagePath()));
+                                return dto;
+                            })
                             .collect(Collectors.toList());
                     cartDTO.setProducts(products);
                     return cartDTO;
@@ -264,12 +270,23 @@ public class CartServiceImpl implements CartService {
                 .map(item -> {
                     ProductDTO p = modelMapper.map(item.getProduct(), ProductDTO.class);
                     p.setQuantity(item.getQuantity()); // quantity in cart comes from CartItem
+                    p.setImagePath(convertToPublicUrl(item.getProduct().getImagePath()));
                     return p;
                 })
                 .toList();
 
         dto.setProducts(products);
         return dto;
+    }
+
+    private String convertToPublicUrl(String imagePath) {
+        if (imagePath == null || imagePath.isBlank()) {
+            return null;
+        }
+        if (imagePath.startsWith("http")) {
+            return imagePath;
+        }
+        return supabaseStorageClient.publicUrl(imagePath);
     }
     private void validateQuantity(Integer quantity) {
         if (quantity == null || quantity <= 0) {
@@ -346,6 +363,7 @@ public class CartServiceImpl implements CartService {
                 .map(item -> {
                     ProductDTO dto = modelMapper.map(item.getProduct(), ProductDTO.class);
                     dto.setQuantity(item.getQuantity()); // cart quantity
+                    dto.setImagePath(convertToPublicUrl(item.getProduct().getImagePath()));
                     return dto;
                 })
                 .toList();
