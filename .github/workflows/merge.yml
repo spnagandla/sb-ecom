@@ -16,7 +16,7 @@ jobs:
     steps:
       # 1) Clone repo into the runner workspace
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       # 2) Setup Java for Maven build/tests
       - name: Set up Java
